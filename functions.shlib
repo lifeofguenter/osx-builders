@@ -1,0 +1,47 @@
+throw_exception() {
+  echo "[$(date | tr -d '\n')] Ooops!" 1>&2
+  echo 'Stack trace:' 1>&2
+  while caller $((n++)) 1>&2; do :; done;
+  exit 1
+}
+
+consolelog() {
+  local color
+  local ts
+
+  ts="[$(date -u +'%Y-%m-%d %H:%M:%S')] "
+  color_reset='\e[0m'
+
+  case "${2}" in
+    success )
+      color='\e[0;32m'
+      ;;
+    error )
+      color='\e[1;31m'
+      ;;
+    * )
+      color='\e[0;37m'
+      ;;
+  esac
+
+  if [[ ! -z "${1}" ]]; then
+    printf "${color}%s%s: %s${color_reset}\n" "${ts}" "${0##*/}" "${1}"
+  fi
+
+  return 0
+}
+
+builder() {
+  for f in "${@}"; do
+    consolelog "building ${f}..."
+    "build_${f}" > /dev/null
+  done
+}
+
+command_exists() {
+  if ! command -v "${1}" &> /dev/null; then
+    return 1
+  fi
+
+  return 0
+}
